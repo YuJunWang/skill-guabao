@@ -6,6 +6,18 @@
 
 ---
 
+## 📦 如何安裝 (Installation)
+
+安裝 `skill-guabao` 非常簡單，你完全不需要手動 clone 專案或複製檔案。
+
+只要把這個 GitHub 專案庫的網址丟給你的 AI Agent (例如在 Antigravity IDE 的對話框中)，並這樣跟他說：
+
+> "請幫我安裝這個外掛：https://github.com/YuJunWang/skill-guabao"
+
+你的 AI Agent 就會全自動幫你把外掛抓下來、建立相關的 `SKILL.md` 指令規則，並為你完成所有必要的設定！
+
+---
+
 ## 📁 目錄結構
 
 ```

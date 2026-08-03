@@ -19,6 +19,18 @@ It provides a lifecycle management system for plugins and utilizes the GitHub AP
 
 ---
 
+## 📦 Installation
+
+Installing `skill-guabao` is incredibly simple. You don't need to manually clone repositories or copy files. 
+
+Just copy the link to this repository and paste it into your AI Agent's chat (e.g., Antigravity IDE) with a prompt like this:
+
+> "Please help me install this plugin: https://github.com/YuJunWang/skill-guabao"
+
+Your AI Agent will automatically handle the cloning, setup the `SKILL.md` instructions, and initialize the required configurations for you!
+
+---
+
 ## 📁 Directory Structure
 
 ```
