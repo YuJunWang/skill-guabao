@@ -1,0 +1,48 @@
+# Antigravity Plugin Governance Inventory (Template)
+# 
+# 這是 GuaBao (掛包) 外掛總管的基礎設定檔範本。
+# 當 Agent 初次為使用者建立外掛管理系統時，請將此範本複製到使用者的 `config` 目錄下：
+# 路徑：C:\Users\<username>\.gemini\config\plugins_inventory.yaml
+
+trusted_hosts:
+  - github.com/anthropics
+  - github.com/langchain-ai
+  - github.com/obra
+  - github.com/axtonliu
+  - github.com/nextlevelbuilder
+
+# 類別一：受 Git 控管的核心開源專案
+# 由使用者自行開發並推送到 GitHub 的開源專案。
+git_tracked_skills:
+  # 範例：
+  # my-custom-plugin:
+  #   status: "Physical / Synced via Script"
+  #   repo_local_path: "C:\\path\\to\\real\\repo"
+  #   sync_script: "C:\\path\\to\\sync_script.ps1"
+  #   github_url: "https://github.com/username/my-custom-plugin"
+  #   version: "1.0.0"
+  #   last_updated: "YYYY-MM-DD"
+
+# 類別二：本地實用小工具
+# 僅在本地使用的輕量級工具包，不受 Git 版本控管。
+local_utility_skills:
+  # 範例：
+  # my-local-tool:
+  #   status: "Static / Local Only"
+  #   description: "用來處理某些特定格式的本地工具"
+
+# 類別三：第三方開源外掛
+# 使用者手動從開源社群抓取下來的第三方外掛。GuaBao 引擎會針對此清單檢查更新。
+third_party_git_skills:
+  # 範例：
+  # anthropic-design:
+  #   status: "Static / Tracked"
+  #   github_url: "https://github.com/anthropics/skills"
+  #   last_pulled_date: "2026-01-01"
+
+# 類別四：系統原生外掛
+# 伴隨 Antigravity 核心引擎更新的官方外掛，通常無外部連結，嚴禁修改。
+system_bundled_skills:
+  # 範例：
+  # core-sdk:
+  #   status: "System Bundled / Unknown Origin"
