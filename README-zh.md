@@ -49,7 +49,7 @@ guabao/
 
 如果你希望你的 AI 助理（如 Antigravity Agent）能主動使用 GuaBao 來幫你管理外掛，建議將以下規則加入到你的全域設定檔（如 `AGENTS.md` 或系統提示詞）中：
 
-> **外掛與生態管理**：當遇到需要安裝新外掛、編輯 `config/plugins/` 檔案，或是詢問第三方套件是否需要更新時，**必須主動查閱 `skill-guabao` 技能**以確認全域註冊表 (`plugins_inventory.yaml`) 的規範與更新狀態。
+> **外掛與生態管理**：當遇到需要安裝新外掛、撰寫新的本地技能 (包含 `config/plugins/` 或 `config/skills/`)，或是詢問套件更新時，**必須主動查閱 `skill-guabao` 技能**以確認全域註冊表 (`plugins_inventory.yaml`) 的規範。新增任何全域技能後，也務必主動將其登記至 GuaBao 的註冊表中以供後續追蹤。
 
 這樣一來，AI 只要偵測到你在詢問外掛更新或是準備建立新外掛，就會自動啟動 GuaBao 的管理機制。
 

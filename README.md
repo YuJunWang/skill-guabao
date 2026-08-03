@@ -62,7 +62,7 @@ skill-guabao/
 
 If you want your AI assistant (e.g. Antigravity Agent) to proactively use GuaBao to manage your plugins, it is recommended to add the following rules to your global configuration file (e.g., `AGENTS.md` or system prompt):
 
-> **Plugin and Ecosystem Management**: When encountering a need to install a new plugin, edit files in `config/plugins/`, or check if third-party packages need an update, **you must proactively consult the `skill-guabao` skill** to confirm the global registry (`plugins_inventory.yaml`) specifications and update statuses.
+> **Plugin and Ecosystem Management**: When encountering a need to install a new plugin, write a new local utility skill (including in `config/plugins/` or `config/skills/`), or check if packages need an update, **you must proactively consult the `skill-guabao` skill** to confirm the global registry (`plugins_inventory.yaml`) specifications. After creating any new global skills, you must proactively register them into GuaBao's inventory for future tracking.
 
 This ensures that whenever the AI detects you asking about plugin updates or preparing to create a new plugin, it will automatically engage GuaBao's management mechanisms.
 
