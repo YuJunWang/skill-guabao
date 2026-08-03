@@ -7,6 +7,16 @@ import os
 import hashlib
 import re
 import shutil
+import argparse
+from urllib.parse import urlparse
+
+def get_guabao_home():
+    """Return the base config directory for GuaBao. 
+    Uses GUABAO_HOME if set, otherwise defaults to ~/.gemini/config/"""
+    env_home = os.environ.get("GUABAO_HOME")
+    if env_home:
+        return Path(env_home).resolve()
+    return (Path.home() / ".gemini" / "config").resolve()
 
 def parse_inventory(filepath):
     with open(filepath, 'r', encoding='utf-8') as f:
@@ -16,7 +26,6 @@ def parse_inventory(filepath):
 def check_trusted_host(github_url, inventory_data):
     """Check if the github_url belongs to a trusted host."""
     trusted_hosts = inventory_data.get("trusted_hosts", [])
-    from urllib.parse import urlparse
     
     try:
         parsed = urlparse(github_url)
@@ -148,28 +157,29 @@ def pre_update_scan(plugin_dir, github_url, commit_sha):
                     
     return modified_files
 
-def validate_install_path(target_path_str):
-    """Validate that the target installation path is legitimate."""
-    target = Path(target_path_str).resolve()
-    base_plugins = (Path.home() / ".gemini" / "config" / "plugins").resolve()
+def validate_install_path(target_path):
+    """Validate if the given path is a valid installation path for a plugin."""
+    target = Path(target_path).resolve()
+    base_plugins = get_guabao_home() / "plugins"
     
     if base_plugins not in target.parents:
-        return False, "Target path must be inside ~/.gemini/config/plugins/"
+        return False, f"Target path must be inside {base_plugins}"
         
     if target.parent != base_plugins:
         return False, "Target path must be directly under the plugins/ directory."
         
     plugin_name = target.name
-    if not re.match(r'^[a-zA-Z0-9_-]+$', plugin_name):
+    import re
+    if not re.match(r'^[\w\-]+$', plugin_name):
         return False, "Plugin name can only contain alphanumeric characters, hyphens, and underscores."
         
-    return True, "Valid path."
+    return True, "Valid path"
 
 def uninstall_plugin(plugin_name, inventory_path):
-    """Safely uninstall a plugin by archiving it and removing it from the inventory."""
+    """Safely uninstall a plugin by archiving it and removing from inventory."""
     inventory_path = Path(inventory_path).resolve()
-    base_plugins = Path.home() / ".gemini" / "config" / "plugins"
-    archive_dir = Path.home() / ".gemini" / "config" / "archive"
+    base_plugins = get_guabao_home() / "plugins"
+    archive_dir = get_guabao_home() / "archive"
     
     plugin_dir = base_plugins / plugin_name
     
@@ -251,13 +261,13 @@ def check_plugin_status(github_url, last_pulled_date_str, stable_days=3):
         return "BLEEDING_EDGE", latest_date_only
 
 def main():
-    import argparse
-    # 解決 Windows 終端機 Emoji 輸出編碼問題
-    sys.stdout.reconfigure(encoding='utf-8')
     parser = argparse.ArgumentParser(description="GuaBao Plugin Updater")
-    default_inventory = Path.home() / ".gemini" / "config" / "plugins_inventory.yaml"
+    default_inventory = get_guabao_home() / "plugins_inventory.yaml"
     parser.add_argument("--inventory", default=str(default_inventory), help="Path to plugins_inventory.yaml")
     args = parser.parse_args()
+    
+    # 解決 Windows 終端機 Emoji 輸出編碼問題
+    sys.stdout.reconfigure(encoding='utf-8')
     
     print("=========================================")
     print(" GuaBao Updater: 第三方外掛狀態掃描")
@@ -295,8 +305,10 @@ def main():
             print(f"   ❌ 檢查失敗，無法取得 GitHub 資訊。")
             
         last_pulled_commit = info.get("last_pulled_commit")
+        
+        # 檢查本地防護 (Diff Scan)
+        plugin_dir = get_guabao_home() / "plugins" / name
         if status in ["UP_TO_DATE", "UPDATE_AVAILABLE", "BLEEDING_EDGE"] and last_pulled_commit:
-            plugin_dir = os.path.join(str(Path.home()), ".gemini", "config", "plugins", name)
             modified = pre_update_scan(plugin_dir, github_url, last_pulled_commit)
             if modified is None:
                 print(f"   ❌ 無法取得 GitHub tree ({last_pulled_commit})，略過本地 diff 比對。")

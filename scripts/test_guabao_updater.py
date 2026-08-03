@@ -35,6 +35,20 @@ def test_parse_inventory(tmp_path, mock_yaml_data):
     assert plugins["test_plugin_stable"]["github_url"] == "https://github.com/user/repo-stable"
     assert plugins["test_plugin_stable"]["last_pulled_date"] == "2026-07-20"
 
+def test_get_guabao_home(monkeypatch, tmp_path):
+    from pathlib import Path
+    
+    # Test default
+    monkeypatch.delenv("GUABAO_HOME", raising=False)
+    home = guabao_updater.get_guabao_home()
+    assert home == (Path.home() / ".gemini" / "config").resolve()
+    
+    # Test env override
+    custom_home = tmp_path / "custom_home"
+    monkeypatch.setenv("GUABAO_HOME", str(custom_home))
+    home = guabao_updater.get_guabao_home()
+    assert home == custom_home.resolve()
+
 def test_check_naming_conflict():
     inventory = {
         "third_party_git_skills": {"anthropic-design": {}},

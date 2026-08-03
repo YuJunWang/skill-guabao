@@ -5,10 +5,13 @@ description: Global package manager for Antigravity skills. Must be consulted be
 
 # GuaBao (掛包) 外掛總管
 
-## 🎯 核心原則 (Core Principle)
-GuaBao 是一套針對 Antigravity 生態系外掛 (`config/plugins/`) 的自動化管理與版本控管工具。
-為了避免破壞系統核心或是造成開發版本混亂，**任何 Agent 在嘗試編輯、刪除或新增外掛檔案前，都必須先讀取這份核心註冊表**：
-`C:\Users\wang6\.gemini\config\plugins_inventory.yaml`
+## 🌟 核心目標與啟動條件
+GuaBao 是一個「管理 Skill 的 Skill」。當使用者要求新增、更新、整理或刪除任何第三方/本地外掛包 (Skills) 時，你必須嚴格遵守以下操作規範。
+GuaBao 預設管理 `$GUABAO_HOME` 目錄下的外掛 (若未設定 `GUABAO_HOME` 環境變數，則預設為 `~/.gemini/config`)。
+
+- **註冊表位置**：`$GUABAO_HOME/plugins_inventory.yaml`
+- **外掛存放目錄**：`$GUABAO_HOME/plugins/`
+- **更新檢查腳本**：`$GUABAO_HOME/plugins/skill-guabao/scripts/guabao_updater.py`
 
 ## 🍲 GuaBao Update Checker (更新檢查)
 GuaBao 內建了自動化更新檢查腳本，能分析 `third_party_git_skills` 清單，並利用 GitHub API 幫使用者確認是否有更新。
@@ -18,11 +21,11 @@ GuaBao 內建了自動化更新檢查腳本，能分析 `third_party_git_skills`
 
 ## 📝 外掛註冊表初始化與新增/移除維護 (Initialization & Maintenance)
 如果使用者是第一次使用 GuaBao，或者系統中尚未存在 `plugins_inventory.yaml`，請執行以下操作：
-1. **初始化**：將 GuaBao 資料夾下的 `plugins_inventory.template.yaml` 拷貝並重新命名為 `~/.gemini/config/plugins_inventory.yaml`。
+1. **初始化**：若 GuaBao 尚未初始化，請複製 `plugins_inventory.template.yaml` 並重新命名為 `$GUABAO_HOME/plugins_inventory.yaml`。
 2. **新增外掛與建立**：當使用者要求安裝或建立新的外掛時，Agent 必須：
    - 先呼叫 `check_naming_conflict` 確保名稱無衝突。
    - 若為安裝外部來源 (GitHub)，必須呼叫 `check_trusted_host` 比對 `trusted_hosts` 清單。若不在清單內，必須先警告使用者「此來源並非已知白名單」，等待使用者同意後再安裝。
-   - 呼叫 `validate_install_path` 確認建立路徑位於 `~/.gemini/config/plugins/` 且命名合法。
+   - 呼叫 `validate_install_path` 確認建立路徑位於 `$GUABAO_HOME/plugins/` 且命名合法。
    - 將外掛依類別登記至 `plugins_inventory.yaml` 中（若為第三方，記錄 `github_url` 與 `last_pulled_commit`）。
 3. **移除/解除安裝外掛**：當使用者要求刪除外掛時，Agent **不應該**直接用指令刪除，而必須呼叫 `guabao_updater.py` 裡的 `uninstall_plugin(plugin_name, inventory_path)` 來執行封存與清理作業，並提醒使用者清除全域規則中的殘留。
 4. **紀錄使用狀態 (可選)**：當 Agent 主動使用某個第三方或本地工具外掛時，建議呼叫 `mark_plugin_used(plugin_name, inventory_path)` 來更新其 `last_used_date`。GuaBao 會自動掃描超過 60 天未使用的閒置外掛並提醒使用者。

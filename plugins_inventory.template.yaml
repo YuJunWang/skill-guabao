@@ -10,6 +10,7 @@ trusted_hosts:
   - github.com/obra
   - github.com/axtonliu
   - github.com/nextlevelbuilder
+  - github.com/YuJunWang
 
 # 類別一：受 Git 控管的核心開源專案
 # 由使用者自行開發並推送到 GitHub 的開源專案。
@@ -34,7 +35,12 @@ local_utility_skills:
 # 類別三：第三方開源外掛
 # 使用者手動從開源社群抓取下來的第三方外掛。GuaBao 引擎會針對此清單檢查更新。
 third_party_git_skills:
-  # 範例：
+  skill-guabao:
+    status: "Static / Tracked"
+    github_url: "https://github.com/YuJunWang/skill-guabao"
+    last_pulled_date: "2026-08-03"
+    last_used_date: "2026-08-03"
+  # 其他範例：
   # anthropic-design:
   #   status: "Static / Tracked"
   #   github_url: "https://github.com/anthropics/skills"
