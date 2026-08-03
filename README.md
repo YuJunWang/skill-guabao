@@ -8,6 +8,19 @@ It provides a lifecycle management system for plugins and utilizes the GitHub AP
 
 ---
 
+## 🤔 Why use GuaBao?
+
+As you use AI Agents, you might find yourself installing more and more plugins (Skills), or even modifying third-party plugins to suit your specific needs. This leads to several pain points:
+1. **Accidental Overwrites**: When you ask an AI to "update a plugin," it might blindly overwrite the entire directory, wiping out your hard-earned local customizations!
+2. **Tracking Chaos**: It's hard to keep track of what plugins are installed, which ones you wrote, and which ones are from third parties.
+3. **Bleeding-Edge Instability**: The latest commit on a GitHub repo isn't always stable. Blindly running `git pull` can easily break your working environment.
+4. **Untrusted Sources**: AI agents might hallucinate or pull code from unknown, untrusted repositories.
+
+**GuaBao solves these problems:**
+Acting as a "manager" for your Agent, GuaBao sits between the AI and your system. It provides conflict protection (Diff Scans), an update maturity check (3-day observation period), idle plugin tracking, and a trusted hosts whitelist. This allows your AI assistant to freely and securely manage your development environment without you having to worry about it breaking things!
+
+---
+
 ## 🛡️ Key Features
 
 - **Automated Update Checking**: Identifies stable updates for your third-party skills using a 3-day maturity check to avoid unstable bleeding-edge commits.
