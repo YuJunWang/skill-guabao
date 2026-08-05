@@ -34,10 +34,15 @@ GuaBao 內建了自動化更新檢查腳本，能分析 `third_party_git_skills`
 根據 `plugins_inventory.yaml` 中的分類，你必須遵守以下相應的檔案存取與版本管理規則：
 
 ### 1. `git_tracked_skills` (類別一：自行開發的核心專案)
-這些外掛是使用者自行開發並推送到 GitHub 的開源專案。為配合前端 UI 限制，它們在 `config/plugins/` 目錄下是「實體檔案拷貝」，而非軟連結。
+這些外掛是使用者自行開發並推送到 GitHub 的開源專案。為配合前端 UI 限制或開發習慣，它們在 `$GUABAO_HOME/plugins/` 目錄下通常是「實體檔案拷貝」，必須採用 **雙區隔離操作流程 (Dual-Zone Workflow)** 來管理「開發儲存庫 (Repo)」與「執行環境 (Runtime)」。
+
 - **可否編輯**：🟢 完全可以。
-- **編輯規則**：請直接對 `config/plugins/` 內的實體檔案進行編輯。
-- **強制操作**：編輯完成後，你 **必須** 記錄並提醒使用者執行專屬的同步腳本 (`sync_script`)。
+- **標準操作流程 (四步驟)**：
+  1. **AI 測試開發**：Agent 請直接對執行環境 (`$GUABAO_HOME/plugins/<skill_name>/`) 內的實體檔案進行編輯與測試，這能讓對話中的修改立即生效。
+  2. **執行腳本同步**：功能測試完美無缺後，Agent **必須** 執行清單上設定的 `sync_script`，將代碼從執行環境單向覆寫回開發儲存庫 (Repo) 中。
+  3. **版控與推送**：切換至開發儲存庫 (Repo) 目錄，執行 `git add`、`git commit` 以及 `git push`，將乾淨的代碼送上 GitHub。
+  4. **反向拉取 (可選)**：若使用者從其他裝置更新了 Repo，則需先在 Repo 執行 `git pull`，再透過部署腳本將新代碼推至執行環境。
+- **進階操作 (符號連結 Symlink)**：若使用者透過系統建立符號連結 (Symlink) 讓執行環境直接指向 Repo，則雙區合一。此時 AI 的任何修改將直接影響 Git 工作區，請務必在 Commit 前仔細檢查 `git diff`。
 
 ### 2. `local_utility_skills` (類別二：本地小工具)
 這些是使用者僅在本地使用的輕量級工具包，不受 Git 版本控管。
