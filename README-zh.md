@@ -83,6 +83,9 @@ python scripts/guabao_updater.py
 
 # 或指定自訂路徑
 python scripts/guabao_updater.py --inventory /path/to/your/plugins_inventory.yaml
+
+# 開發者功能：自動更新指定外掛的「最後更新日期」為今天 (通常在 Push 後使用)
+python scripts/guabao_updater.py --bump <skill_name>
 ```
 
 ---
@@ -99,9 +102,9 @@ GuaBao 內建多項安全檢查，防止不小心的覆蓋或衝突：
 
 | 類別 | 適用情境 | AI 可否修改 | 更新方式 |
 |:---:|---|:---:|---|
-| `git_tracked_skills` | 自行開發並推上 GitHub 的外掛 | ✅ 可以 | 編輯後執行同步腳本 |
+| `git_tracked_skills` | 自行開發並推上 GitHub 的外掛 | ✅ 可以 | Symlink 直改，或編輯後執行同步腳本 |
 | `local_utility_skills` | 僅本地使用的小工具 | ✅ 可以 | 直接修改即可 |
-| `third_party_git_skills` | 從開源社群抓取的第三方外掛 | 🔴 禁止 | 透過 GuaBao 檢查後手動 `git pull` |
+| `third_party_git_skills` | 從開源社群抓取的第三方外掛 | 🔴 禁止 | 封存舊版並重新 `git clone` 最新版 |
 | `system_bundled_skills` | Antigravity 系統內建外掛 | 🔴 禁止 | 隨系統自動更新 |
 
 ---

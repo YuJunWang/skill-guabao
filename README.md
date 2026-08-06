@@ -96,6 +96,9 @@ python scripts/guabao_updater.py
 
 # Or specify a custom path
 python scripts/guabao_updater.py --inventory /path/to/your/plugins_inventory.yaml
+
+# Developer feature: Bump the last_updated date to today for a specific plugin (usually after pushing to GitHub)
+python scripts/guabao_updater.py --bump <skill_name>
 ```
 
 ---
@@ -104,9 +107,9 @@ python scripts/guabao_updater.py --inventory /path/to/your/plugins_inventory.yam
 
 | Category | Use Case | AI Editable? | Update Method |
 |:---:|---|:---:|---|
-| `git_tracked_skills` | Open source plugins developed by you | ✅ Yes | Edit locally and execute sync scripts |
+| `git_tracked_skills` | Open source plugins developed by you | ✅ Yes | Edit directly via Symlink, or use sync scripts for monorepos |
 | `local_utility_skills` | Lightweight, local-only tools | ✅ Yes | Edit directly |
-| `third_party_git_skills` | Open source plugins pulled from GitHub | 🔴 Prohibited | Manually `git pull` after GuaBao checks |
+| `third_party_git_skills` | Open source plugins pulled from GitHub | 🔴 Prohibited | Archive old version and re-clone the latest version |
 | `system_bundled_skills` | Core plugins bundled with the system | 🔴 Prohibited | Automatic with system updates |
 
 ---
