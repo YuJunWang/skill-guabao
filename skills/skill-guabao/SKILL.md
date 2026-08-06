@@ -34,20 +34,31 @@ GuaBao 內建了自動化更新檢查腳本，能分析 `third_party_git_skills`
 根據 `plugins_inventory.yaml` 中的分類，你必須遵守以下相應的檔案存取與版本管理規則：
 
 ### 1. `git_tracked_skills` (類別一：自行開發的核心專案)
-這些外掛是使用者自行開發並推送到 GitHub 的開源專案。為配合前端 UI 限制或開發習慣，它們在 `$GUABAO_HOME/plugins/` 目錄下通常是「實體檔案拷貝」，必須採用 **雙區隔離操作流程 (Dual-Zone Workflow)** 來管理「開發儲存庫 (Repo)」與「執行環境 (Runtime)」。
+這些外掛是使用者自行開發並推送到 GitHub 的開源專案，分為兩種子模式，**必須先讀取清單的 `status` 欄位**才能決定操作方式：
 
+---
+
+#### 子模式 A：`status: Symlink / Repo = Runtime`（如 `skill-guabao`）
+`plugins/<skill_name>/` 目錄**本身就是 Git Repo 根目錄**（裡面有 `.git`）。執行環境與版控環境合而為一。
 - **可否編輯**：🟢 完全可以。
-- **標準操作流程 (四步驟)**：
-  1. **AI 測試開發**：Agent 請直接對執行環境 (`$GUABAO_HOME/plugins/<skill_name>/`) 內的實體檔案進行編輯與測試，這能讓對話中的修改立即生效。
-  2. **執行腳本同步**：功能測試完美無缺後，Agent **必須** 執行清單上設定的 `sync_script`，將代碼從執行環境單向覆寫回開發儲存庫 (Repo) 中。若清單 `sync_script: null`（即 Repo = Runtime，如 `skill-guabao`），則略過此步驟。
-  3. **版控與推送**：切換至開發儲存庫 (Repo) 目錄（對應清單中的 `repo_local_path`），執行 `git add`、`git commit` 以及 `git push`，將乾淨的代碼送上 GitHub。
-  4. **自動同步註冊表**：發布更新後，Agent **必須** 執行以下指令來將清單上的 `last_updated` 刷新為今天，避免 GuaBao 日後發出錯誤的觀察期警告：
-     ```powershell
-     cd $GUABAO_HOME/plugins/guabao
-     python scripts/guabao_updater.py --bump <skill_name>
-     ```
-  5. **反向拉取 (可選)**：若使用者從其他裝置更新了 Repo，則需先在 Repo 執行 `git pull`，再透過部署腳本將新代碼推至執行環境。
-- **進階操作 (符號連結 Symlink)**：若清單上 `status: Symlink / Repo = Runtime`（如 `skill-guabao`），代表執行環境**就是** Git Repo 本身。此時 AI 的任何修改將直接影響 Git 工作區，**不需要執行 sync_script**，請務必在 Commit 前仔細檢查 `git diff`。
+- **操作流程**：
+  1. 直接在 `plugins/<skill_name>/` 編輯檔案，修改立即生效。
+  2. 在同一目錄執行 `git add`、`git commit`、`git push`。**不需要 sync_script**。
+  3. Push 完畢後執行 `--bump` 更新清單日期。
+
+---
+
+#### 子模式 B：`status: Monorepo / Sync Required`（如 `presentation_architect`、`antigravity-image-master`）
+這類 skill 屬於某個 **monorepo**（多個 plugin 共用一個 GitHub Repo）。由於 Antigravity 系統**不支援 Junction/Symlink 讀取**，`plugins/` 底下只能是實體目錄拷貝，因此執行環境與 Git Repo 必然是兩個獨立的位置，透過 `sync_script` 橋接。
+- **可否編輯**：🟢 完全可以。
+- **`repo_local_path` 的意義**：指向 monorepo 的**根目錄**（例如 `agy-pptx-studio/`），而非 plugin 子目錄。
+- **操作流程（同步方向：執行環境 → Repo）**：
+  1. 直接在 `plugins/<skill_name>/` 編輯並測試，修改立即生效。
+  2. 測試完成後，**必須**執行清單中的 `sync_script`，將改動從執行環境單向複製回 monorepo 的對應子目錄。
+  3. 切換至 `repo_local_path` 目錄，執行 `git add`、`git commit`、`git push`。
+  4. 執行 `--bump` 更新清單日期。
+- **⚠️ 重要警告**：若跳過 sync_script 直接 push，Git Repo 將**不會**包含你在執行環境做的改動，造成版本落後！
+- **反向部署（Repo → 執行環境）**：若從其他裝置更新了 Repo，需在 monorepo 執行 `git pull`，再**手動**將對應子目錄內容複製回 `plugins/<skill_name>/`（可撰寫反向 deploy 腳本）。
 
 ### 2. `local_utility_skills` (類別二：本地小工具)
 這些是使用者僅在本地使用的輕量級工具包，不受 Git 版本控管。
