@@ -125,37 +125,73 @@ def fetch_github_tree(github_url, commit_sha):
         return response.json().get("tree", [])
     return []
 
-def pre_update_scan(plugin_dir, github_url, commit_sha):
-    """Scan local plugin directory against remote github tree. Returns list of modified files."""
+def pre_update_scan(plugin_dir, github_url, commit_sha, source_skills_path=None):
+    """Scan local plugin directory against remote github tree.
+    
+    If source_skills_path is provided (e.g. '.claude/skills' or 'config/skills'),
+    remote files under that path are compared against local files under 'skills/'.
+    This supports the "Normalize upon Import" architecture where third-party repos
+    may store skills in non-standard locations.
+    
+    Returns list of modified files, or None on failure.
+    """
     tree = fetch_github_tree(github_url, commit_sha)
     if not tree:
-        return None # Failed to fetch tree
-        
-    remote_shas = {} 
+        return None  # Failed to fetch tree
+
+    # Normalize source_skills_path for prefix matching
+    # e.g. 'config/skills' -> 'config/skills/'
+    remote_prefix = None
+    if source_skills_path and source_skills_path.strip('/') != 'skills':
+        remote_prefix = source_skills_path.strip('/') + '/'
+
+    remote_shas = {}
     for item in tree:
-        if item["type"] == "blob":
-            name = os.path.basename(item["path"])
-            if name not in remote_shas:
-                remote_shas[name] = set()
-            remote_shas[name].add(item["sha"])
-            
+        if item["type"] != "blob":
+            continue
+        remote_path = item["path"]
+
+        if remote_prefix:
+            # Only compare files under source_skills_path on remote
+            if remote_path.startswith(remote_prefix):
+                # Strip the remote prefix so we can compare to local skills/ basename
+                relative = remote_path[len(remote_prefix):]
+                fname = os.path.basename(relative)
+            else:
+                continue  # Ignore files outside source_skills_path
+        else:
+            fname = os.path.basename(remote_path)
+
+        if fname not in remote_shas:
+            remote_shas[fname] = set()
+        remote_shas[fname].add(item["sha"])
+
     modified_files = []
     if not os.path.exists(plugin_dir):
         return []
 
-    for root, dirs, files in os.walk(plugin_dir):
+    # If source_skills_path was remapped, scan local skills/ directory
+    local_scan_dir = plugin_dir
+    if remote_prefix:
+        local_skills_dir = os.path.join(plugin_dir, "skills")
+        if os.path.exists(local_skills_dir):
+            local_scan_dir = local_skills_dir
+
+    for root, dirs, files in os.walk(local_scan_dir):
         for file in files:
             if file == ".DS_Store" or file.endswith(".pyc"):
                 continue
-                
+
             local_path = os.path.join(root, file)
             local_sha = calculate_git_blob_sha(local_path)
-            
+
             if file in remote_shas:
                 if local_sha not in remote_shas[file]:
                     modified_files.append(local_path)
-                    
+
     return modified_files
+
+
 
 def validate_install_path(target_path):
     """Validate if the given path is a valid installation path for a plugin."""
@@ -342,11 +378,13 @@ def main():
             print(f"   ❌ 檢查失敗，無法取得 GitHub 資訊。")
             
         last_pulled_commit = info.get("last_pulled_commit")
+        source_skills_path = info.get("source_skills_path")  # 路徑映射（正規化外掛使用）
         
         # 檢查本地防護 (Diff Scan)
         plugin_dir = get_guabao_home() / "plugins" / name
         if status in ["UP_TO_DATE", "UPDATE_AVAILABLE", "BLEEDING_EDGE"] and last_pulled_commit:
-            modified = pre_update_scan(plugin_dir, github_url, last_pulled_commit)
+            modified = pre_update_scan(plugin_dir, github_url, last_pulled_commit, source_skills_path=source_skills_path)
+
             if modified is None:
                 print(f"   ❌ 無法取得 GitHub tree ({last_pulled_commit})，略過本地 diff 比對。")
             elif modified:

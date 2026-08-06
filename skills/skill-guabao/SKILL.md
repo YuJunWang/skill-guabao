@@ -67,14 +67,35 @@ GuaBao 內建了自動化更新檢查腳本，能分析 `third_party_git_skills`
 - **強制操作**：無須 commit。
 
 ### 3. `third_party_git_skills` (類別三：第三方 GitHub 專案)
-這些是使用者手動從開源社群抓取下來的第三方外掛。
+這些是使用者手動從開源社群抓取下來的第三方外掛。不同生態系（Claude, Cursor, LangChain 等）的 Skill 架構不盡相同，GuaBao 的職責是在安裝/更新的當下，將其**正規化 (Normalize upon Import)** 成 Antigravity 環境標準格式，讓它們能獨立運作、無需依賴 GuaBao 的任何全局設定。
+
 - **可否編輯**：🔴 嚴格禁止。除非使用者明確下達「強制客製化第三方套件」的指令。
-- **更新規則**：如需更新至最新版本，請依照以下標準流程操作：
-  1. **版本確認**：執行 `python <guabao_dir>/scripts/guabao_updater.py` 確認版本狀態為 `UPDATE_AVAILABLE`（非觀察期）。
+- **安裝/更新規則**：依照以下標準流程操作：
+
+  **Phase 1 — 取得與確認**
+  1. **版本確認**：執行 `python <guabao_dir>/scripts/guabao_updater.py` 確認版本狀態（安裝時略過此步驟）。
   2. **安全封存舊版**：將現有的 `$GUABAO_HOME/plugins/<skill_name>/` 目錄移動至 `$GUABAO_HOME/archive/<skill_name>_YYYYMMDD/` 備份。
-  3. **重新 Clone**：從清單中的 `github_url` 執行 `git clone` 下載最新版本至原外掛目錄。
-  4. **移除 `.git` 目錄**：第三方外掛以靜態快照管理，Clone 完成後刪除 `.git` 資料夾防止混淆。
-  5. **同步版本紀錄**：取得新版的 Commit SHA（`git rev-parse HEAD`），更新清單的 `last_pulled_date` 與 `last_pulled_commit`（可用 `--bump` 指令更新日期）。
+  3. **Clone 至暫存區**：從清單中的 `github_url` 執行 `git clone` 下載最新版本至**暫存目錄**（例如 `$GUABAO_HOME/tmp/<skill_name>/`）。
+
+  **Phase 2 — 正規化 (Normalize upon Import)**
+  4. **結構掃描**：在暫存目錄中，執行 `Get-ChildItem -Recurse -Filter SKILL.md` 找出 Skill 的實際存放位置（例如 `.claude/skills`、`config/skills` 或標準的 `skills/`）。
+  5. **移動並清理（非複製）**：
+     - 建立空的 `$GUABAO_HOME/plugins/<skill_name>/` 目錄。
+     - 將掃描到的技能目錄**剪下**，搬移至 `$GUABAO_HOME/plugins/<skill_name>/skills/`。
+     - 若暫存目錄中有 `rules/`、`hooks.json`、`mcp_config.json` 或 `README.md`，也一併搬移至目標目錄根目錄。
+     - 完整刪除暫存目錄，確保不留下任何冗餘檔案。
+  6. **中繼檔補完 (Auto-Polyfill)**：檢查 `$GUABAO_HOME/plugins/<skill_name>/plugin.json` 是否存在。若無，AI 必須根據專案名稱自動生成一份標準格式：
+     ```json
+     { "name": "<skill_name>" }
+     ```
+
+  **Phase 3 — 紀錄**
+  7. **記錄路徑映射**：在 `plugins_inventory.yaml` 的 `source_skills_path` 欄位中，記錄**第 4 步掃描到的原始路徑**（例如 `.claude/skills`）。此欄位是未來 `guabao_updater.py` 執行跨路徑 Diff Scan 時的唯一依據。
+  8. **同步版本紀錄**：取得 Clone 時的 Commit SHA，更新清單的 `last_pulled_date` 與 `last_pulled_commit`（可用 `--bump` 指令更新日期）。
+
+- **⚠️ 重要原則**：正規化後，每個外掛應只在 `$GUABAO_HOME/plugins/<skill_name>/` 存放**一份**且符合 Antigravity 標準格式的檔案。即使移除 GuaBao，這些外掛依然必須能被 Antigravity 完美讀取。
+
+
 
 ### 4. `system_bundled_skills` (類別四：系統原生外掛)
 伴隨 Antigravity 核心引擎更新的官方外掛，通常沒有單獨的版本號與外部連結。
