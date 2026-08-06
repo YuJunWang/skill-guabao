@@ -213,6 +213,38 @@ def uninstall_plugin(plugin_name, inventory_path):
     print(f"請務必檢查你的全域設定檔 (如 `AGENTS.md` 或其他系統提示詞) 中，")
     print(f"是否還有殘留指向 `{plugin_name}` 的觸發規則或路由！如果有，請記得手動刪除以避免 AI 發生混淆。")
 
+def bump_plugin_version(plugin_name, inventory_path):
+    """Update the last_updated date to today for a git_tracked_skill."""
+    inventory_path = Path(inventory_path).resolve()
+    try:
+        with open(inventory_path, 'r', encoding='utf-8') as f:
+            data = yaml.safe_load(f)
+            
+        updated = False
+        today = datetime.now().strftime("%Y-%m-%d")
+        
+        # Check in git_tracked_skills
+        if "git_tracked_skills" in data and plugin_name in data["git_tracked_skills"]:
+            data["git_tracked_skills"][plugin_name]["last_updated"] = today
+            updated = True
+        
+        # Also check third_party just in case (update last_pulled_date)
+        if "third_party_git_skills" in data and plugin_name in data["third_party_git_skills"]:
+            data["third_party_git_skills"][plugin_name]["last_pulled_date"] = today
+            updated = True
+            
+        if updated:
+            with open(inventory_path, 'w', encoding='utf-8') as f:
+                yaml.dump(data, f, allow_unicode=True, default_flow_style=False, sort_keys=False)
+            print(f"✅ 已成功將外掛 `{plugin_name}` 的更新日期同步為 {today}！")
+            return True
+        else:
+            print(f"⚠️ 找不到外掛 `{plugin_name}`，請確認名稱是否正確。")
+            return False
+    except Exception as e:
+        print(f"⚠️ 處理註冊表時發生錯誤: {e}")
+        return False
+
 def get_api_url(github_url):
     # github_url e.g., https://github.com/anthropics/skills
     parts = github_url.rstrip('/').split('/')
@@ -264,10 +296,15 @@ def main():
     parser = argparse.ArgumentParser(description="GuaBao Plugin Updater")
     default_inventory = get_guabao_home() / "plugins_inventory.yaml"
     parser.add_argument("--inventory", default=str(default_inventory), help="Path to plugins_inventory.yaml")
+    parser.add_argument("--bump", metavar="PLUGIN_NAME", help="Update the last_updated/last_pulled_date to today for the specified plugin")
     args = parser.parse_args()
     
     # 解決 Windows 終端機 Emoji 輸出編碼問題
     sys.stdout.reconfigure(encoding='utf-8')
+    
+    if args.bump:
+        bump_plugin_version(args.bump, args.inventory)
+        return
     
     print("=========================================")
     print(" GuaBao Updater: 第三方外掛狀態掃描")

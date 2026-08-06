@@ -41,7 +41,8 @@ GuaBao 內建了自動化更新檢查腳本，能分析 `third_party_git_skills`
   1. **AI 測試開發**：Agent 請直接對執行環境 (`$GUABAO_HOME/plugins/<skill_name>/`) 內的實體檔案進行編輯與測試，這能讓對話中的修改立即生效。
   2. **執行腳本同步**：功能測試完美無缺後，Agent **必須** 執行清單上設定的 `sync_script`，將代碼從執行環境單向覆寫回開發儲存庫 (Repo) 中。
   3. **版控與推送**：切換至開發儲存庫 (Repo) 目錄，執行 `git add`、`git commit` 以及 `git push`，將乾淨的代碼送上 GitHub。
-  4. **反向拉取 (可選)**：若使用者從其他裝置更新了 Repo，則需先在 Repo 執行 `git pull`，再透過部署腳本將新代碼推至執行環境。
+  4. **自動同步註冊表**：發布更新後，Agent **必須** 執行 `python scripts/guabao_updater.py --bump <skill_name>` 來將清單上的 `last_updated` 刷新為今天，避免 GuaBao 日後發出錯誤的觀察期警告。
+  5. **反向拉取 (可選)**：若使用者從其他裝置更新了 Repo，則需先在 Repo 執行 `git pull`，再透過部署腳本將新代碼推至執行環境。
 - **進階操作 (符號連結 Symlink)**：若使用者透過系統建立符號連結 (Symlink) 讓執行環境直接指向 Repo，則雙區合一。此時 AI 的任何修改將直接影響 Git 工作區，請務必在 Commit 前仔細檢查 `git diff`。
 
 ### 2. `local_utility_skills` (類別二：本地小工具)
