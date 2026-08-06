@@ -39,11 +39,15 @@ GuaBao 內建了自動化更新檢查腳本，能分析 `third_party_git_skills`
 - **可否編輯**：🟢 完全可以。
 - **標準操作流程 (四步驟)**：
   1. **AI 測試開發**：Agent 請直接對執行環境 (`$GUABAO_HOME/plugins/<skill_name>/`) 內的實體檔案進行編輯與測試，這能讓對話中的修改立即生效。
-  2. **執行腳本同步**：功能測試完美無缺後，Agent **必須** 執行清單上設定的 `sync_script`，將代碼從執行環境單向覆寫回開發儲存庫 (Repo) 中。
-  3. **版控與推送**：切換至開發儲存庫 (Repo) 目錄，執行 `git add`、`git commit` 以及 `git push`，將乾淨的代碼送上 GitHub。
-  4. **自動同步註冊表**：發布更新後，Agent **必須** 執行 `python scripts/guabao_updater.py --bump <skill_name>` 來將清單上的 `last_updated` 刷新為今天，避免 GuaBao 日後發出錯誤的觀察期警告。
+  2. **執行腳本同步**：功能測試完美無缺後，Agent **必須** 執行清單上設定的 `sync_script`，將代碼從執行環境單向覆寫回開發儲存庫 (Repo) 中。若清單 `sync_script: null`（即 Repo = Runtime，如 `skill-guabao`），則略過此步驟。
+  3. **版控與推送**：切換至開發儲存庫 (Repo) 目錄（對應清單中的 `repo_local_path`），執行 `git add`、`git commit` 以及 `git push`，將乾淨的代碼送上 GitHub。
+  4. **自動同步註冊表**：發布更新後，Agent **必須** 執行以下指令來將清單上的 `last_updated` 刷新為今天，避免 GuaBao 日後發出錯誤的觀察期警告：
+     ```powershell
+     cd $GUABAO_HOME/plugins/guabao
+     python scripts/guabao_updater.py --bump <skill_name>
+     ```
   5. **反向拉取 (可選)**：若使用者從其他裝置更新了 Repo，則需先在 Repo 執行 `git pull`，再透過部署腳本將新代碼推至執行環境。
-- **進階操作 (符號連結 Symlink)**：若使用者透過系統建立符號連結 (Symlink) 讓執行環境直接指向 Repo，則雙區合一。此時 AI 的任何修改將直接影響 Git 工作區，請務必在 Commit 前仔細檢查 `git diff`。
+- **進階操作 (符號連結 Symlink)**：若清單上 `status: Symlink / Repo = Runtime`（如 `skill-guabao`），代表執行環境**就是** Git Repo 本身。此時 AI 的任何修改將直接影響 Git 工作區，**不需要執行 sync_script**，請務必在 Commit 前仔細檢查 `git diff`。
 
 ### 2. `local_utility_skills` (類別二：本地小工具)
 這些是使用者僅在本地使用的輕量級工具包，不受 Git 版本控管。
@@ -54,7 +58,12 @@ GuaBao 內建了自動化更新檢查腳本，能分析 `third_party_git_skills`
 ### 3. `third_party_git_skills` (類別三：第三方 GitHub 專案)
 這些是使用者手動從開源社群抓取下來的第三方外掛。
 - **可否編輯**：🔴 嚴格禁止。除非使用者明確下達「強制客製化第三方套件」的指令。
-- **更新規則**：如需更新，請先執行 GuaBao updater 檢查版本，再引導使用者進行手動更新或 `git pull`。
+- **更新規則**：如需更新至最新版本，請依照以下標準流程操作：
+  1. **版本確認**：執行 `python <guabao_dir>/scripts/guabao_updater.py` 確認版本狀態為 `UPDATE_AVAILABLE`（非觀察期）。
+  2. **安全封存舊版**：將現有的 `$GUABAO_HOME/plugins/<skill_name>/` 目錄移動至 `$GUABAO_HOME/archive/<skill_name>_YYYYMMDD/` 備份。
+  3. **重新 Clone**：從清單中的 `github_url` 執行 `git clone` 下載最新版本至原外掛目錄。
+  4. **移除 `.git` 目錄**：第三方外掛以靜態快照管理，Clone 完成後刪除 `.git` 資料夾防止混淆。
+  5. **同步版本紀錄**：取得新版的 Commit SHA（`git rev-parse HEAD`），更新清單的 `last_pulled_date` 與 `last_pulled_commit`（可用 `--bump` 指令更新日期）。
 
 ### 4. `system_bundled_skills` (類別四：系統原生外掛)
 伴隨 Antigravity 核心引擎更新的官方外掛，通常沒有單獨的版本號與外部連結。
