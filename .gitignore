@@ -12,3 +12,7 @@ ENV/
 env.bak/
 venv.bak/
 .DS_Store
+
+# 個人知識草稿（cross-project wiki draft），不應進入公開 repo
+wiki_draft.md
+wiki_draft_*.md
